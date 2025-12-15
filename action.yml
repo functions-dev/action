@@ -1,4 +1,4 @@
-name: 'My Kn-Func'
+name: 'My Func'
 description: 'This action does custom stuff for it is custom'
 inputs:
   name:
