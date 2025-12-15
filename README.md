@@ -1,12 +1,12 @@
-# Knative Functions as Github Action!
-Knative Functions' Github Action, so you can get Functions in your workflows!
+# Functions as Github Action!
+Functions' Github Action, so you can get Functions in your workflows!
 Automatically determines what os the GH Runner has to get the right binary.
 You can change where you want the `func` to be downloaded with `destination` - regardless, it will be in `$PATH`!
 By default, uses latest version, but you can specify which one you want using `version`.
 
 `action.yml` -- action yaml with descriptions
 ```yaml
-name: 'My Kn-Func'
+name: 'My Func'
 description: 'This action does custom stuff for it is custom'
 inputs:
   name:
