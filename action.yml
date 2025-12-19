@@ -1,4 +1,4 @@
-name: 'My Func'
+name: 'Func Action'
 description: 'This action does custom stuff for it is custom'
 inputs:
   name:

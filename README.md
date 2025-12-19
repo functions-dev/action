@@ -6,7 +6,7 @@ By default, uses latest version, but you can specify which one you want using `v
 
 `action.yml` -- action yaml with descriptions
 ```yaml
-name: 'My Func'
+name: 'Func Action'
 description: 'This action does custom stuff for it is custom'
 inputs:
   name:

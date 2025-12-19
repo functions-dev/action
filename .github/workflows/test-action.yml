@@ -1,8 +1,8 @@
-name: my-custom-action
+name: test-action
 on: [pull_request,workflow_dispatch]
 
 jobs:
   func:
     runs-on: ubuntu-latest
     steps:
-    - uses: gauron99/knative-func-action@main
+    - uses: functions-dev/action@main
