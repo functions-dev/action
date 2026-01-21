@@ -3,7 +3,10 @@ on: [pull_request, workflow_dispatch]
 
 jobs:
   test-default:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest,windows-latest,macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup func CLI
@@ -37,18 +40,31 @@ jobs:
           name: 'my-func'
       - run: my-func version
 
-  test-windows:
-    runs-on: windows-latest
+  test-custom-destination:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup func CLI
+      - name: Setup func CLI with custom destination
         uses: ./
+        with:
+          destination: '/tmp/func-bin'
       - run: func version
+      - name: Verify func using path
+        run: /tmp/func-bin/func version
 
-  test-macos:
-    runs-on: macos-latest
+  test-invalid-version:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup func CLI
+      - name: Setup func CLI with non-existing version (should fail)
+        id: invalid-version
         uses: ./
-      - run: func version
+        with:
+          version: 'v99.99.99'
+        continue-on-error: true
+      - name: Verify action failed
+        run: |
+          if [ "${{ steps.invalid-version.outcome }}" != "failure" ]; then
+            echo "Expected action to fail with invalid version"
+            exit 1
+          fi

@@ -30,27 +30,29 @@ function getOsBinName() {
 
 // Normalizes version to release tag format: knative-vX.Y.Z
 // Ex.: '1.16' or 'v1.16' will return 'knative-v1.16.0'
-function smartVersionUpdate(version){
+function smartVersionUpdate(version) {
   const versionRegex = /^(?<knprefix>knative-)?(?<prefix>v?)(?<major>\d+)\.(?<minor>\d+)(.(?<patch>\d+))?$/;
-  let match = version.match(versionRegex);
-  if (match) {
-    const knprefix = 'knative-';
-    const prefix = 'v';
-    const patch = match.groups.patch ?? 0;
-    return `${knprefix}${prefix}${match.groups.major}.${match.groups.minor}.${patch}`;
-  } 
-
-  core.setFailed(`Invalid version format (${version}). Expected format: "1.16[.X]" or "v1.16[.X]"`);
-  return undefined;
+  const match = version.match(versionRegex);
+  if (!match) {
+    throw new Error(`Invalid version format (${version}). Expected format: "1.16[.X]" or "v1.16[.X]"`);
+  }
+  const knprefix = 'knative-';
+  const prefix = 'v';
+  const patch = match.groups.patch ?? 0;
+  return `${knprefix}${prefix}${match.groups.major}.${match.groups.minor}.${patch}`;
 }
 
-// Downloads binary and makes it executable
-async function cmdConstructAndRun(url, binPath) {
-  await exec.exec('curl', ['-L', '-o', binPath, url]);
- 
+const DEFAULT_BINARY_SOURCE = 'https://github.com/knative/func/releases/download';
+
+// Downloads binary from release URL and makes it executable
+async function downloadFuncBinary(version, osBinName, binPath, binarySource) {
+  const url = `${binarySource}/${version}/${osBinName}`;
+  core.info(`Downloading from: ${url}`);
+
+  await exec.exec('curl', ['-L', '--fail', '-o', binPath, url]);
+
   if (!fs.existsSync(binPath)) {
-    core.setFailed("Download failed, couldn't find the binary on disk");
-    return;
+    throw new Error("Download failed, couldn't find the binary on disk");
   }
 
   if (process.env.RUNNER_OS !== 'Windows') {
@@ -70,35 +72,43 @@ async function addBinToPath(binPath) {
 }
 
 async function run() {
+  const osBinName = core.getInput('binary') || getOsBinName();
+  if (osBinName === "unknown") {
+    core.setFailed("Invalid os binary determination, try setting it specifically using 'binary'");
+    return;
+  }
+
+  const versionInput = core.getInput('version') || DEFAULT_FUNC_VERSION;
+  const destination = core.getInput('destination') || process.cwd();
+  const binarySource = core.getInput('binarySource') || DEFAULT_BINARY_SOURCE;
+  let bin = core.getInput('name') || 'func';
+  if (process.env.RUNNER_OS === 'Windows' && !bin.endsWith('.exe')) {
+    bin += '.exe';
+  }
+
+  let version;
   try {
-    const osBin = core.getInput('binary') || getOsBinName();
-    if (osBin === "unknown") {
-      core.setFailed("Invalid os binary determination, try setting it specifically using 'binary'");
-      return;
-    }
-
-    let version = core.getInput('version') || DEFAULT_FUNC_VERSION;
-    const destination = core.getInput('destination') || process.cwd();
-    let bin = core.getInput('name') || 'func';
-    if (process.env.RUNNER_OS === 'Windows' && !bin.endsWith('.exe')) {
-      bin += '.exe';
-    }
-
-    version = smartVersionUpdate(version);
-    if (!version) return;
-
-    const url = `https://github.com/knative/func/releases/download/${version}/${osBin}`;
-    core.info(`URL: ${url}`);
-
-    const fullPathBin = path.resolve(destination, bin);
-
-    await cmdConstructAndRun(url, fullPathBin);
-    await addBinToPath(fullPathBin);
-    await exec.exec(fullPathBin, ['version']);
-
+    version = smartVersionUpdate(versionInput);
   } catch (error) {
     core.setFailed(error.message);
+    return;
   }
+
+  if (!fs.existsSync(destination)) {
+    fs.mkdirSync(destination, { recursive: true });
+  }
+
+  const fullPathBin = path.resolve(destination, bin);
+
+  try {
+    await downloadFuncBinary(version, osBinName, fullPathBin, binarySource);
+  } catch (error) {
+    core.setFailed(`Download failed: ${error.message}`);
+    return;
+  }
+
+  await addBinToPath(fullPathBin);
+  await exec.exec(fullPathBin, ['version']);
 }
 
 run();

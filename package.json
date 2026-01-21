@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "GitHub Action to download and setup the func CLI",
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@actions/exec": "^1.1.1"
+    "@actions/core": "~1.11.1",
+    "@actions/exec": "~1.1.1"
   }
 }

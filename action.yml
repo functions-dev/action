@@ -9,6 +9,8 @@ inputs:
     description: '(optional) Provide version to download. Any version in release pages works https://github.com/knative/func/tags'
   destination:
     description: '(optional) Provide a path where to move the desired downloaded binary, otherwise cwd is used'
+  binarySource:
+    description: '(optional) Base URL for downloading binaries. Defaults to GitHub releases. Pattern: <url-base>/<version>/<os-bin-name>'
 runs:
   using: 'node20'
   main: 'index.js'
