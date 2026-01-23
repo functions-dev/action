@@ -1,8 +1,70 @@
 name: test-action
-on: [pull_request,workflow_dispatch]
+on: [pull_request, workflow_dispatch]
 
 jobs:
-  func:
+  test-default:
+    strategy:
+      matrix:
+        os: [ubuntu-latest,windows-latest,macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI
+        uses: ./
+      - run: func version
+
+  test-custom-version:
+    runs-on: ubuntu-latest
+    env:
+      TEST_VERSION: '1.19.0'
+      VERSION_OFFSET: 27  # internal version = minor + offset (v1.19 → v0.46)
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI with custom version
+        uses: ./
+        with:
+          version: 'v${{ env.TEST_VERSION }}'
+      - name: Verify version
+        run: |
+          MINOR=$(echo "$TEST_VERSION" | cut -d. -f2)
+          INTERNAL=$((MINOR + VERSION_OFFSET))
+          func version | grep -q "v0.${INTERNAL}"
+
+  test-custom-name:
     runs-on: ubuntu-latest
     steps:
-    - uses: functions-dev/action@main
+      - uses: actions/checkout@v4
+      - name: Setup func CLI with custom name
+        uses: ./
+        with:
+          name: 'my-func'
+      - run: my-func version
+
+  test-custom-destination:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI with custom destination
+        uses: ./
+        with:
+          destination: '/tmp/func-bin'
+      - run: func version
+      - name: Verify func using path
+        run: /tmp/func-bin/func version
+
+  test-invalid-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI with non-existing version (should fail)
+        id: invalid-version
+        uses: ./
+        with:
+          version: 'v99.99.99'
+        continue-on-error: true
+      - name: Verify action failed
+        run: |
+          if [ "${{ steps.invalid-version.outcome }}" != "failure" ]; then
+            echo "Expected action to fail with invalid version"
+            exit 1
+          fi
