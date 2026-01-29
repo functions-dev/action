@@ -2,7 +2,7 @@ name: test-action
 on: [pull_request, workflow_dispatch]
 
 jobs:
-  test-default:
+  test-default-latest:
     strategy:
       matrix:
         os: [ubuntu-latest,windows-latest,macos-latest]
