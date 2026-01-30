@@ -16,7 +16,7 @@ jobs:
   test-custom-version:
     runs-on: ubuntu-latest
     env:
-      TEST_VERSION: '1.19.0'
+      TEST_VERSION: '1.18.0'
       VERSION_OFFSET: 27  # internal version = minor + offset (v1.19 → v0.46)
     steps:
       - uses: actions/checkout@v4
