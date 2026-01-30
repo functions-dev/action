@@ -2,7 +2,7 @@ name: test-action
 on: [pull_request, workflow_dispatch]
 
 jobs:
-  test-default:
+  test-default-latest:
     strategy:
       matrix:
         os: [ubuntu-latest,windows-latest,macos-latest]
@@ -51,6 +51,16 @@ jobs:
       - run: func version
       - name: Verify func using path
         run: /tmp/func-bin/func version
+
+  test-custom-binary-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI with custom binarySource URL
+        uses: ./
+        with:
+          binarySource: 'https://github.com/knative/func/releases/download/knative-v1.19.0/func_linux_amd64'
+      - run: func version
 
   test-invalid-version:
     runs-on: ubuntu-latest
