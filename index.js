@@ -3,7 +3,12 @@ const exec = require('@actions/exec');
 const path = require('path');
 const fs = require('fs');
 
-const LATEST = 'latest';
+// Using latest as default
+const DEFAULT_VERSION = 'latest';
+const NIGHTLY_VERSION = 'nightly';
+const DEFAULT_BINARY_SOURCE = 'https://github.com/knative/func/releases/download';
+const DEFAULT_LATEST_BINARY_SOURCE = 'https://github.com/knative/func/releases/latest/download';
+const DEFAULT_NIGHTLY_BINARY_SOURCE = 'https://storage.googleapis.com/knative-nightly/func/latest';
 
 function getOsBinName() {
     const osBinName = core.getInput('binary');
@@ -50,8 +55,9 @@ function smartVersionUpdate(version) {
 }
 
 function resolveVersion() {
-    const version = core.getInput('version') || LATEST;
-    if (version.toLowerCase().trim() === LATEST) return LATEST;
+    const version = core.getInput('version') || DEFAULT_VERSION;
+    if (version.toLowerCase().trim() === DEFAULT_VERSION) return DEFAULT_VERSION;
+    if (version.toLowerCase().trim() === NIGHTLY_VERSION) return NIGHTLY_VERSION;
     return smartVersionUpdate(version);
 }
 
@@ -62,12 +68,16 @@ function resolveDownloadUrl(version, binName) {
         return binarySource;
     }
 
-    if (version === LATEST) {
+    if (version === NIGHTLY_VERSION) {
+        core.info('Using nightly version...');
+        return `${DEFAULT_NIGHTLY_BINARY_SOURCE}/${binName}`;
+    }
+    if (version === DEFAULT_VERSION) {
         core.info('Using latest version...');
-        return `https://github.com/knative/func/releases/latest/download/${binName}`;
+        return `${DEFAULT_LATEST_BINARY_SOURCE}/${binName}`;
     }
     core.info(`Using specific version ${version}`);
-    return `https://github.com/knative/func/releases/download/${version}/${binName}`;
+    return `${DEFAULT_BINARY_SOURCE}/${version}/${binName}`;
 }
 
 async function downloadFuncBinary(url, binPath) {
@@ -93,7 +103,7 @@ function addBinToPath(binPath) {
 
 async function warnStaleVersion(version) {
     // Skip version check for 'latest' or custom binary source
-    if (version === LATEST || core.getInput('binarySource')) {
+    if (version === DEFAULT_VERSION || core.getInput('binarySource')) {
         return;
     }
 

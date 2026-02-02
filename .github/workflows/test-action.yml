@@ -30,6 +30,16 @@ jobs:
           INTERNAL=$((MINOR + VERSION_OFFSET))
           func version | grep -q "v0.${INTERNAL}"
 
+  test-nightly-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI with nightly version
+        uses: ./
+        with:
+          version: 'nightly'
+      - run: func version
+
   test-custom-name:
     runs-on: ubuntu-latest
     steps:
