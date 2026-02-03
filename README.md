@@ -14,8 +14,8 @@ GitHub Action to download and setup the func CLI. Automatically detects OS and a
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `version` | Version to download (e.g. `v1.20.0`) | latest |
-| `name` | Binary name | `func` |
+| `version` | Version to download (e.g. `v1.20.0`, `nightly`) | latest |
+| `name` | Filename for downloaded binary | `func` |
 | `binary` | Specific binary to download from GitHub release | auto-detected |
 | `destination` | Download directory | cwd |
 | `binarySource` | Full URL for the func binary | empty (uses GitHub releases) |

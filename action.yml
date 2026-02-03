@@ -6,7 +6,7 @@ inputs:
   binary:
     description: '(optional) Binary you want to download (exact string expected), otherwise will be determined via the OS of GH Runner'
   version:
-    description: '(optional) Version to download. Use "latest" or specify a version from release pages https://github.com/knative/func/tags'
+    description: '(optional) Version to download. Use "latest", "nightly", or specify a version from release pages https://github.com/knative/func/tags'
   destination:
     description: '(optional) Path where to move the desired downloaded binary, otherwise cwd is used'
   binarySource:
