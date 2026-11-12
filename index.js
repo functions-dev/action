@@ -9,6 +9,8 @@ const NIGHTLY_VERSION = 'nightly';
 const DEFAULT_BINARY_SOURCE = 'https://github.com/knative/func/releases/download';
 const DEFAULT_LATEST_BINARY_SOURCE = 'https://github.com/knative/func/releases/latest/download';
 const DEFAULT_NIGHTLY_BINARY_SOURCE = 'https://storage.googleapis.com/knative-nightly/func/latest';
+// Where ko puts the binary, as in ghcr.io/knative/func/func
+const DEFAULT_IMAGE_PATH = '/ko-app/func';
 
 function getOsBinName() {
     const osBinName = core.getInput('binary');
@@ -83,9 +85,26 @@ function resolveDownloadUrl(version, binName) {
 async function downloadFuncBinary(url, binPath) {
     core.info(`Downloading from: ${url}`);
     await exec.exec('curl', ['-L', '--fail', '-o', binPath, url]);
+}
 
+async function copyFuncBinaryFromImage(image, binPath) {
+    const imagePath = core.getInput('imagePath') || DEFAULT_IMAGE_PATH;
+    core.info(`Copying ${imagePath} from image ${image}`);
+
+    // create pulls the image when missing. The command is never run; it lets
+    // create work on images that set no entrypoint or command.
+    const { stdout } = await exec.getExecOutput('docker', ['create', image, 'unused']);
+    const container = stdout.trim().split('\n').pop();
+    try {
+        await exec.exec('docker', ['cp', `${container}:${imagePath}`, binPath]);
+    } finally {
+        await exec.exec('docker', ['rm', container], { ignoreReturnCode: true });
+    }
+}
+
+async function makeExecutable(binPath) {
     if (!fs.existsSync(binPath)) {
-        throw new Error("Download failed, couldn't find the binary on disk");
+        throw new Error(`Couldn't find the func binary at ${binPath}`);
     }
     if (process.env.RUNNER_OS !== 'Windows') {
         await exec.exec('chmod', ['+x', binPath]);
@@ -145,14 +164,23 @@ async function warnStaleVersion(version) {
 }
 
 async function run() {
-    const osBinName = getOsBinName();
-    const version = resolveVersion();
-    await warnStaleVersion(version);
+    const imageSource = core.getInput('imageSource');
+    if (imageSource && core.getInput('binarySource')) {
+        throw new Error('Set only one of binarySource and imageSource');
+    }
 
-    const url = resolveDownloadUrl(version, osBinName);
     const fullPathBin = resolveFullPathBin();
+    if (imageSource) {
+        await copyFuncBinaryFromImage(imageSource, fullPathBin);
+    } else {
+        const osBinName = getOsBinName();
+        const version = resolveVersion();
+        await warnStaleVersion(version);
 
-    await downloadFuncBinary(url, fullPathBin);
+        const url = resolveDownloadUrl(version, osBinName);
+        await downloadFuncBinary(url, fullPathBin);
+    }
+    await makeExecutable(fullPathBin);
     addBinToPath(fullPathBin);
 
     await exec.exec(fullPathBin, ['version']);

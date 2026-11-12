@@ -11,6 +11,10 @@ inputs:
     description: '(optional) Path where to move the desired downloaded binary, otherwise cwd is used'
   binarySource:
     description: '(optional) Full URL for downloading the binary. Overrides version if provided. Must be curl-able returning the func binary'
+  imageSource:
+    description: '(optional) Container image to copy the binary from, e.g. "ghcr.io/knative/func/func:latest". Overrides version if provided. Cannot be used with binarySource. Needs docker on the runner'
+  imagePath:
+    description: '(optional) Path of the binary inside imageSource (defaults to "/ko-app/func")'
 runs:
   using: 'node20'
   main: 'index.js'
