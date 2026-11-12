@@ -18,4 +18,17 @@ GitHub Action to download and setup the func CLI. Automatically detects OS and a
 | `name` | Filename for downloaded binary | `func` |
 | `binary` | Specific binary to download from GitHub release | auto-detected |
 | `destination` | Download directory | cwd |
-| `binarySource` | Full URL for the func binary | empty (uses GitHub releases) |
+| `binarySource` | Full URL for the func binary, or for a tar.gz holding it | empty (uses GitHub releases) |
+| `binarySubpath` | Path of the binary inside a tar.gz `binarySource` | empty |
+
+## Binary from a tar.gz
+
+When the download is a tar.gz, the action unpacks it and takes the binary at
+`binarySubpath`. It tells a tar.gz by its content, not by the URL.
+
+```yaml
+- uses: functions-dev/action@main
+  with:
+    binarySource: 'https://example.com/func-linux-amd64.tar.gz'
+    binarySubpath: 'bin/func'
+```

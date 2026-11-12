@@ -10,7 +10,9 @@ inputs:
   destination:
     description: '(optional) Path where to move the desired downloaded binary, otherwise cwd is used'
   binarySource:
-    description: '(optional) Full URL for downloading the binary. Overrides version if provided. Must be curl-able returning the func binary'
+    description: '(optional) Full URL for downloading the binary. Overrides version if provided. Must be curl-able returning the func binary, or a tar.gz holding it (then set binarySubpath)'
+  binarySubpath:
+    description: '(optional) Path of the binary inside a tar.gz binarySource, e.g. "bin/func". Required when the download is a tar.gz'
 runs:
   using: 'node20'
   main: 'index.js'

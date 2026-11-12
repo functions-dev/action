@@ -2,6 +2,7 @@ const core = require('@actions/core');
 const exec = require('@actions/exec');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 // Using latest as default
 const DEFAULT_VERSION = 'latest';
@@ -82,14 +83,62 @@ function resolveDownloadUrl(version, binName) {
 
 async function downloadFuncBinary(url, binPath) {
     core.info(`Downloading from: ${url}`);
-    await exec.exec('curl', ['-L', '--fail', '-o', binPath, url]);
-
-    if (!fs.existsSync(binPath)) {
-        throw new Error("Download failed, couldn't find the binary on disk");
+    // Work in a temp folder, so that only the binary ever lands at binPath.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'func-'));
+    try {
+        await exec.exec('curl', ['-L', '--fail', '-o', 'download', url], { cwd: dir });
+        if (!fs.existsSync(path.join(dir, 'download'))) {
+            throw new Error("Download failed, couldn't find the binary on disk");
+        }
+        fs.copyFileSync(await binaryInDownload(dir), binPath);
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
     }
     if (process.env.RUNNER_OS !== 'Windows') {
         await exec.exec('chmod', ['+x', binPath]);
     }
+}
+
+// A tar.gz starts with the gzip magic bytes; no func binary (ELF, Mach-O, PE) does.
+function isGzip(file) {
+    const fd = fs.openSync(file, 'r');
+    try {
+        const magic = Buffer.alloc(2);
+        fs.readSync(fd, magic, 0, 2, 0);
+        return magic[0] === 0x1f && magic[1] === 0x8b;
+    } finally {
+        fs.closeSync(fd);
+    }
+}
+
+// Returns the path of the binary in dir/download: the download itself, or
+// the file at binarySubpath when the download is a tar.gz.
+async function binaryInDownload(dir) {
+    const download = path.join(dir, 'download');
+    const subpath = core.getInput('binarySubpath');
+    if (!isGzip(download)) {
+        if (subpath) {
+            throw new Error('binarySubpath is set, but the download is not a tar.gz archive');
+        }
+        return download;
+    }
+    if (!subpath) {
+        throw new Error('The download is a tar.gz archive. Set binarySubpath to the path of the binary inside it');
+    }
+
+    core.info(`Extracting ${subpath} from the tar.gz archive`);
+    const archive = path.join(dir, 'archive');
+    fs.mkdirSync(archive);
+    // Relative names only, so a GNU tar on Windows never reads the "C:"
+    // of a path as a remote host.
+    await exec.exec('tar', ['-xzf', 'download', '-C', 'archive'], { cwd: dir });
+    // path.join resolves "..", so a subpath that leaves the archive ends up
+    // outside this folder.
+    const bin = path.join(archive, subpath);
+    if (!bin.startsWith(archive + path.sep) || !fs.statSync(bin, { throwIfNoEntry: false })?.isFile()) {
+        throw new Error(`Couldn't find a file at ${subpath} in the tar.gz archive`);
+    }
+    return bin;
 }
 
 function addBinToPath(binPath) {
