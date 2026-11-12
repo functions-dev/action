@@ -72,6 +72,34 @@ jobs:
           binarySource: 'https://github.com/knative/func/releases/download/knative-v1.19.0/func_linux_amd64'
       - run: func version
 
+  test-image-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI from image
+        uses: ./
+        with:
+          imageSource: 'ghcr.io/knative/func/func:latest'
+      - run: func version
+
+  test-image-and-binary-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup func CLI with both sources (should fail)
+        id: both-sources
+        uses: ./
+        with:
+          binarySource: 'https://github.com/knative/func/releases/download/knative-v1.19.0/func_linux_amd64'
+          imageSource: 'ghcr.io/knative/func/func:latest'
+        continue-on-error: true
+      - name: Verify action failed
+        run: |
+          if [ "${{ steps.both-sources.outcome }}" != "failure" ]; then
+            echo "Expected action to fail with both binarySource and imageSource"
+            exit 1
+          fi
+
   test-invalid-version:
     runs-on: ubuntu-latest
     steps:
