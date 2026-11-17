@@ -10,6 +10,11 @@ GitHub Action to download and setup the func CLI. Automatically detects OS and a
     version: 'v1.20.0'  # optional - uses latest as default
 ```
 
+## Requirements
+
+The action runs on Node.js 24, so it needs GitHub Actions runner v2.327.1 or
+newer. GitHub-hosted runners have it; self-hosted runners may need an update.
+
 ## Inputs
 
 | Input | Description | Default |
