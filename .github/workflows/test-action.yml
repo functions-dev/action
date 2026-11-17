@@ -8,7 +8,7 @@ jobs:
         os: [ubuntu-latest,windows-latest,macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup func CLI
         uses: ./
       - run: func version
@@ -19,7 +19,7 @@ jobs:
       TEST_VERSION: '1.18.0'
       VERSION_OFFSET: 27  # internal version = minor + offset (v1.19 → v0.46)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup func CLI with custom version
         uses: ./
         with:
@@ -33,7 +33,7 @@ jobs:
   test-nightly-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup func CLI with nightly version
         uses: ./
         with:
@@ -43,7 +43,7 @@ jobs:
   test-custom-name:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup func CLI with custom name
         uses: ./
         with:
@@ -53,7 +53,7 @@ jobs:
   test-custom-destination:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup func CLI with custom destination
         uses: ./
         with:
@@ -65,7 +65,7 @@ jobs:
   test-custom-binary-source:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup func CLI with custom binarySource URL
         uses: ./
         with:
@@ -81,7 +81,7 @@ jobs:
           - { os: windows-latest, bin: func_windows_amd64.exe }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Pack a func release binary into a tar.gz
         id: pack
         shell: bash
@@ -103,7 +103,7 @@ jobs:
   test-binary-source-tar-gz-errors:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Pack a func release binary into a tar.gz
         working-directory: ${{ runner.temp }}
         run: |
@@ -149,7 +149,7 @@ jobs:
   test-invalid-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup func CLI with non-existing version (should fail)
         id: invalid-version
         uses: ./
